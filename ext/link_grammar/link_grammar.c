@@ -6,6 +6,8 @@
 
 #include "link_grammar.h"
 
+static VALUE rlink_linkage_make_cnode_array( CNode * );
+
 void Init_link_grammar() {
 	VALUE lg = rb_define_module("LinkGrammar");
 	rb_define_module_function(lg, "create_dictionary", create_dictionary, 1);
@@ -33,9 +35,15 @@ void Init_link_grammar() {
 	rb_define_module_function(lg, "create_linkage", create_linkage, 3);
 	rb_define_module_function(lg, "delete_linkage", delete_linkage, 1);
 	rb_define_module_function(lg, "print_linkage_diagram", print_linkage_diagram, 1);
-	rb_define_module_function(lg, "linkage_count_sublinkages", linkage_count_sublinkages, 1);
+	rb_define_module_function(lg, "rlink_linkage_constituent_tree", rlink_linkage_constituent_tree, 1);
+  rb_define_module_function(lg, "linkage_count_sublinkages", linkage_count_sublinkages, 1);
 	rb_define_module_function(lg, "linkage_count_num_words", linkage_count_num_words, 1);
 	rb_define_module_function(lg, "linkage_count_num_links", linkage_count_num_links, 1);	
+  
+  /* Struct that contains links of a constituent tree (:label, :children, :start, :end) */
+  rb_define_const(lg, "CTree", rlink_sLinkageCTree );
+  rlink_sLinkageCTree = rb_struct_define( "LinkParserLinkageCTree",
+    "label", "children", "start", "end", NULL );
 }
 
 //functions for retrieving pointers from ruby VALUE wrapper
@@ -256,6 +264,51 @@ VALUE print_linkage_diagram(const VALUE self, VALUE link) {
 	LinkagePtr *link_ptr = retrieve_linkage(link);
 	char *diagram = linkage_print_diagram(link_ptr->linkage);
 	return rb_str_new2(diagram);
+}
+
+
+VALUE rlink_linkage_make_cnode_array( CNode *ctree ) {
+  VALUE nodes = rb_ary_new();
+  VALUE rnode;
+  CNode *cnode = ctree;
+  
+  /*
+  struct CNode_s {
+    char * label;
+    CNode * child;
+    CNode * next;
+    int start, end;
+  };
+*/
+  while ( cnode ) {
+    rnode = rb_struct_new( rlink_sLinkageCTree,
+    rb_str_new2( linkage_constituent_node_get_label(cnode) ),
+    Qnil,
+    INT2FIX( linkage_constituent_node_get_start(cnode) ),
+    INT2FIX( linkage_constituent_node_get_end(cnode) ) /* end */
+    );
+    
+    /* Make a node array for any children */
+    rb_struct_aset( rnode, INT2FIX(1),
+    rlink_linkage_make_cnode_array(linkage_constituent_node_get_child(cnode)) );
+    
+    rb_ary_push( nodes, rnode );
+    cnode = linkage_constituent_node_get_next( cnode );
+  }
+  
+  return nodes;
+}
+
+VALUE rlink_linkage_constituent_tree(const VALUE self, VALUE link ) {
+  LinkagePtr *link_ptr = retrieve_linkage(link);
+  CNode *ctree = NULL;
+  VALUE rval = Qnil;
+  
+  ctree = linkage_constituent_tree( link_ptr->linkage );
+  rval = rlink_linkage_make_cnode_array( ctree );
+  
+  linkage_free_constituent_tree( ctree );
+  return rval;
 }
 
 VALUE linkage_count_sublinkages(const VALUE self, VALUE link) {

@@ -6,6 +6,8 @@
 #include "link-grammar/and.c"
 #include "link-grammar/build-disjuncts.h"
 #include "link-grammar/build-disjuncts.c"
+#include "link-grammar/constituents.h"
+#include "link-grammar/constituents.c"
 #include "link-grammar/count.h"
 #include "link-grammar/count.c"
 #include "link-grammar/disjunct-utils.h" //ifndef guard
@@ -76,6 +78,8 @@ typedef struct linkage_ptr {
 	Linkage linkage;
 } LinkagePtr;
 
+VALUE rlink_sLinkageCTree;
+
 VALUE dictionary_path_set(const VALUE self, volatile VALUE dict_path);
 VALUE create_dictionary(const VALUE self, volatile VALUE lang);
 VALUE delete_dictionary(const VALUE self, VALUE dict);
@@ -104,6 +108,7 @@ VALUE delete_sentence(const VALUE self, VALUE sentence);
 VALUE create_linkage(const VALUE self, volatile VALUE k, VALUE sentence, VALUE opts);
 VALUE delete_linkage(const VALUE self, VALUE link);
 VALUE print_linkage_diagram(const VALUE self, VALUE link);
+VALUE rlink_linkage_constituent_tree(const VALUE self, VALUE link);
 VALUE linkage_count_sublinkages(const VALUE self, VALUE link);
 VALUE linkage_count_num_words(const VALUE self, VALUE link);
 VALUE linkage_count_num_links(const VALUE self, VALUE link);

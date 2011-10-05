@@ -15,6 +15,10 @@ module GrammarCop
       print_linkage_diagram(linkage)
     end
     
+    def self.constituent_tree(linkage)
+      rlink_linkage_constituent_tree(linkage)
+    end  
+    
     def self.sublinkages_count(linkage)
       linkage_count_sublinkages(linkage)
     end
